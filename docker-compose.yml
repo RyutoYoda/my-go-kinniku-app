@@ -4,9 +4,9 @@ services:
   db:
     image: postgres:13
     environment:
-      - POSTGRES_DB=workoutdb
-      - POSTGRES_USER=root
-      - POSTGRES_PASSWORD=strongpassword
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -19,9 +19,9 @@ services:
       - db
     environment:
       - DB_HOST=db
-      - DB_NAME=workoutdb
-      - DB_USER=root
-      - DB_PASSWORD=strongpassword
+      - DB_NAME=${POSTGRES_DB}
+      - DB_USER=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
     ports:
       - "8080:8080"
 
