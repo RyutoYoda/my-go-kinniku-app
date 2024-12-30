@@ -13,7 +13,8 @@ import (
 )
 
 func main() {
-    dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable",
+    // SSL接続用に修正: sslmode=require
+    dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=require",
         os.Getenv("DB_HOST"),
         os.Getenv("DB_USER"),
         os.Getenv("DB_PASSWORD"),
@@ -21,8 +22,10 @@ func main() {
 
     var err error
     for i := 0; i < 30; i++ {
+        // データベース接続を試行
         handlers.DB, err = sql.Open("postgres", dsn)
         if err == nil {
+            // データベース接続確認
             err = handlers.DB.Ping()
             if err == nil {
                 break
