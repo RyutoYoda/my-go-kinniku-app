@@ -1,30 +1,49 @@
-version: '3'
+package main
 
-services:
-  db:
-    image: postgres:13
-    environment:
-      - POSTGRES_DB=${DB_NAME}
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-    ports:
-      - "5432:5432"
+import (
+    "database/sql"
+    "fmt"
+    "log"
+    "net/http"
+    "os"
+    "time"
 
-  go-app:
-    build: .
-    depends_on:
-      - db
-    environment:
-      - DB_HOST=${DB_HOST}
-      - DB_NAME=${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_SSLMODE=require
-    ports:
-      - "8080:8080"
+    "myapp/handlers"
+    _ "github.com/lib/pq"
+)
 
-volumes:
-  postgres_data:
+func main() {
+    // SSL接続用に修正: sslmode=require
+    dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=require",
+        os.Getenv("DB_HOST"),
+        os.Getenv("DB_USER"),
+        os.Getenv("DB_PASSWORD"),
+        os.Getenv("DB_NAME"))
+
+    var err error
+    for i := 0; i < 30; i++ {
+        // データベース接続を試行
+        handlers.DB, err = sql.Open("postgres", dsn)
+        if err == nil {
+            // データベース接続確認
+            err = handlers.DB.Ping()
+            if err == nil {
+                break
+            }
+        }
+        log.Printf("データベース接続を試行中... (%d/30)", i+1)
+        time.Sleep(2 * time.Second)
+    }
+    if err != nil {
+        log.Fatalf("データベース接続に失敗しました: %v", err)
+    }
+    defer handlers.DB.Close()
+
+    log.Println("サーバーがポート8080で起動しています...")
+    http.HandleFunc("/", handlers.ShowRecords)
+    http.HandleFunc("/add", handlers.AddRecord)
+    http.HandleFunc("/download", handlers.DownloadCSV) // 新しいルートを追加
+    if err := http.ListenAndServe(":8080", nil); err != nil {
+        log.Fatal(err)
+    }
+}
