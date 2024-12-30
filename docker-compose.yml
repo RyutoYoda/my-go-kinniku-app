@@ -22,6 +22,7 @@ services:
       - DB_NAME=${DB_NAME}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
+      - DB_SSLMODE=require 
     ports:
       - "8080:8080"
 
